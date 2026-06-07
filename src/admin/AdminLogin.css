@@ -1,0 +1,120 @@
+.admin-login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #121815 0%, #1c2621 100%);
+  padding: 1.5rem;
+}
+
+.login-card-container {
+  width: 100%;
+  max-width: 450px;
+  animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.login-card {
+  background-color: #ffffff;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  padding: 3rem 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.login-logo-area {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-logo-img {
+  height: 65px;
+  width: auto;
+  margin-bottom: 1.25rem;
+}
+
+.login-logo-area h2 {
+  font-size: 1.6rem;
+  color: var(--primary-hover);
+  margin-bottom: 0.25rem;
+}
+
+.login-logo-area p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.login-error-alert {
+  background-color: #fce8e6;
+  color: #c53929;
+  border: 1px solid #fad2cf;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.input-with-icon i {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.input-with-icon .form-control {
+  padding-left: 2.8rem !important;
+  background-color: #ffffff !important;
+  border-color: var(--border) !important;
+}
+
+.input-with-icon .form-control:focus {
+  border-color: var(--primary) !important;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 0.85rem !important;
+  font-size: 1rem !important;
+  margin-top: 1rem;
+}
+
+.login-back-link {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+}
+
+.login-back-link a {
+  color: var(--primary);
+  font-weight: 700;
+  font-family: var(--font-heading);
+}
+
+.login-back-link a:hover {
+  color: var(--primary-hover);
+}
+
+@media (max-width: 576px) {
+  .login-card {
+    padding: 2.5rem 1.5rem;
+  }
+}

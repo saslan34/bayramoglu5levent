@@ -1,0 +1,470 @@
+.resident-portal-page {
+  background-color: var(--bg-main);
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+.portal-header-banner {
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
+  color: var(--text-light);
+  padding: 4rem 0;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.portal-header-banner h1 {
+  font-size: 2.2rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.portal-header-banner p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.portal-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.portal-user-badge span {
+  font-size: 0.9rem;
+}
+
+.btn-logout-portal {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.8rem !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: white !important;
+}
+
+.btn-logout-portal:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Summary Cards Grid */
+.portal-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: -2.5rem;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 10;
+}
+
+.summary-card {
+  background-color: #ffffff;
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 0 4px 20px rgba(42, 107, 79, 0.05);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+[data-theme="dark"] .summary-card {
+  background-color: #151a17;
+  border-color: #222d28;
+}
+
+.card-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.bg-primary-light .card-icon { background-color: var(--primary-light); color: var(--primary); }
+.bg-teal-light .card-icon { background-color: rgba(2, 128, 144, 0.1); color: #028090; }
+.bg-yellow-light .card-icon { background-color: rgba(247, 183, 49, 0.1); color: #c98e14; }
+
+.card-info h3 {
+  font-size: 1.6rem;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.card-info p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* Tabs */
+.portal-tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+
+.portal-tab-btn {
+  padding: 1rem 1.5rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.portal-tab-btn:hover {
+  color: var(--primary);
+}
+
+.portal-tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary);
+  transition: var(--transition);
+}
+
+.portal-tab-btn.active {
+  color: var(--primary);
+}
+
+.portal-tab-btn.active::after {
+  width: 100%;
+}
+
+/* Panel */
+.portal-panel {
+  background-color: #ffffff;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .portal-panel {
+  background-color: #151a17;
+  border-color: #222d28;
+}
+
+.panel-header {
+  text-align: left;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--bg-main);
+  padding-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .panel-header {
+  border-bottom-color: #121815;
+}
+
+.panel-header h2 {
+  font-size: 1.5rem;
+  color: var(--primary-hover);
+  margin-bottom: 0.5rem;
+}
+
+.panel-header p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Responsiveness */
+@media (max-width: 991px) {
+  .portal-summary-cards {
+    grid-template-columns: 1fr;
+    margin-top: 2rem;
+  }
+  .portal-tabs {
+    flex-direction: column;
+    gap: 0;
+    border-bottom: none;
+  }
+  .portal-tab-btn {
+    width: 100%;
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 0.5rem;
+  }
+  .portal-tab-btn::after {
+    display: none;
+  }
+  .portal-tab-btn.active {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    border-radius: var(--border-radius-sm);
+    border-bottom-color: transparent;
+  }
+  .portal-panel {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .portal-header-banner {
+    padding: 2.5rem 0;
+  }
+  .portal-header-banner h1 {
+    font-size: 1.8rem;
+  }
+  .portal-user-badge {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Clickable Rows & Detail Badge */
+.purchase-row-clickable {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.purchase-row-clickable:hover {
+  background-color: var(--primary-light) !important;
+}
+
+.btn-view-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-light);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid rgba(42, 107, 79, 0.15);
+  transition: all 0.2s ease;
+}
+
+.purchase-row-clickable:hover .btn-view-details {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+/* Portal Modal Overlay & Card */
+.portal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.portal-modal-card {
+  background: #ffffff;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .portal-modal-card {
+  background-color: #151a17;
+  border-color: #222d28;
+  color: var(--text-light);
+}
+
+.portal-modal-card .modal-header {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .portal-modal-card .modal-header {
+  border-bottom-color: #222d28;
+}
+
+.portal-modal-card .modal-header h2 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: var(--primary-hover);
+}
+
+.portal-modal-card .modal-header .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.portal-modal-card .modal-header .close-btn:hover {
+  color: var(--primary);
+}
+
+.portal-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Detail Fields */
+.detail-field {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.detail-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.5px;
+}
+
+.detail-field h3 {
+  font-size: 1.4rem;
+  margin: 0;
+  color: var(--text-dark);
+}
+
+[data-theme="dark"] .detail-field h3 {
+  color: var(--text-light);
+}
+
+.detail-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.detail-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #dc3545;
+  margin: 0;
+}
+
+.detail-description {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background-color: var(--bg-main);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border);
+}
+
+[data-theme="dark"] .detail-description {
+  background-color: #101412;
+  border-color: #222d28;
+}
+
+/* Offers & Invoice Boxes */
+.offers-box, .invoice-box {
+  background-color: var(--bg-main);
+  border: 1px dashed var(--border);
+  padding: 1rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .offers-box, [data-theme="dark"] .invoice-box {
+  background-color: #101412;
+  border-color: #222d28;
+}
+
+.no-data-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-invoice-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  padding: 0.6rem 1.25rem !important;
+  font-size: 0.9rem !important;
+  color: #ffffff !important;
+  background-color: var(--primary) !important;
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-invoice-view:hover {
+  background-color: var(--primary-hover) !important;
+  transform: translateY(-1px);
+}
+
+.portal-modal-card .modal-footer-actions {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg-main);
+}
+
+[data-theme="dark"] .portal-modal-card .modal-footer-actions {
+  border-top-color: #222d28;
+  background-color: #101412;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 576px) {
+  .detail-grid-two {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+

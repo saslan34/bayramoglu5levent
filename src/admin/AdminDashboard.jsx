@@ -15,6 +15,20 @@ export default function AdminDashboard() {
   const [finances, setFinances] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Theme Toggle State
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('adminTheme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('adminTheme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   // Logged-in User State
   const [currentUser, setCurrentUser] = useState(() => {
     const storedUser = sessionStorage.getItem('adminUser');
@@ -469,6 +483,24 @@ export default function AdminDashboard() {
               <i className="fa-solid fa-scale-balanced"></i> Gelir-Gider Yönetimi
             </button>
           )}
+
+          <button
+            className="sidebar-link theme-toggle-link"
+            onClick={toggleTheme}
+            style={{ marginTop: 'auto', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1.25rem', borderRadius: '0' }}
+          >
+            {theme === 'light' ? (
+              <>
+                <i className="fa-solid fa-moon"></i>
+                <span>Karanlık Mod</span>
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-sun"></i>
+                <span>Aydınlık Mod</span>
+              </>
+            )}
+          </button>
         </nav>
 
         <div className="sidebar-footer">

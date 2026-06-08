@@ -65,6 +65,7 @@ export default function Home() {
     block: 'A1 Blok',
     aptNo: '',
     category: 'Teknik',
+    priority: 'Normal',
     title: '',
     detail: ''
   });
@@ -125,6 +126,7 @@ export default function Home() {
           block: 'A1 Blok',
           aptNo: '',
           category: 'Teknik',
+          priority: 'Normal',
           title: '',
           detail: ''
         });
@@ -317,21 +319,38 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="category">Talep Kategorisi</label>
-                    <select
-                      id="category"
-                      name="category"
-                      value={ticketData.category}
-                      onChange={handleTicketInputChange}
-                      className="form-control"
-                    >
-                      <option value="Teknik">Teknik (Arıza, Onarım)</option>
-                      <option value="Temizlik">Temizlik (Blok, Ortak Alan)</option>
-                      <option value="Güvenlik">Güvenlik (Giriş, Güvenlik İhlali)</option>
-                      <option value="Peyzaj">Peyzaj (Bahçe, Sulama)</option>
-                      <option value="Diğer">Diğer Talepler</option>
-                    </select>
+                  <div className="form-row-two">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="category">Talep Kategorisi</label>
+                      <select
+                        id="category"
+                        name="category"
+                        value={ticketData.category}
+                        onChange={handleTicketInputChange}
+                        className="form-control"
+                      >
+                        <option value="Teknik">Teknik (Arıza, Onarım)</option>
+                        <option value="Temizlik">Temizlik (Blok, Ortak Alan)</option>
+                        <option value="Güvenlik">Güvenlik (Giriş, Güvenlik İhlali)</option>
+                        <option value="Peyzaj">Peyzaj (Bahçe, Sulama)</option>
+                        <option value="Diğer">Diğer Talepler</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="priority">Aciliyet / Öncelik</label>
+                      <select
+                        id="priority"
+                        name="priority"
+                        value={ticketData.priority}
+                        onChange={handleTicketInputChange}
+                        className="form-control"
+                      >
+                        <option value="Düşük">Düşük</option>
+                        <option value="Normal">Normal</option>
+                        <option value="Acil">🚨 Acil (Öncelikli)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="form-group">

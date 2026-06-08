@@ -315,6 +315,7 @@ export const db = {
       block: t.block,
       aptNo: t.apt_no,
       category: t.category,
+      priority: t.priority || 'Normal',
       title: t.title,
       detail: t.detail,
       status: t.status,
@@ -325,22 +326,37 @@ export const db = {
 
   addTicket: async (ticket) => {
     const customId = Math.floor(1000 + Math.random() * 9000).toString();
-    const { data, error } = await supabase
+    const payload = {
+      id: customId,
+      full_name: ticket.fullName,
+      phone: ticket.phone,
+      block: ticket.block,
+      apt_no: ticket.aptNo,
+      category: ticket.category,
+      priority: ticket.priority || 'Normal',
+      title: ticket.title,
+      detail: ticket.detail,
+      status: "new",
+      assigned_staff: "",
+      date: new Date().toLocaleString("tr-TR")
+    };
+
+    let { data, error } = await supabase
       .from('site_tickets')
-      .insert({
-        id: customId,
-        full_name: ticket.fullName,
-        phone: ticket.phone,
-        block: ticket.block,
-        apt_no: ticket.aptNo,
-        category: ticket.category,
-        title: ticket.title,
-        detail: ticket.detail,
-        status: "new",
-        assigned_staff: "",
-        date: new Date().toLocaleString("tr-TR")
-      })
+      .insert(payload)
       .select();
+    
+    if (error && error.message && error.message.includes('column') && error.message.includes('does not exist')) {
+      console.warn("Priority column doesn't exist yet, retrying without it:", error.message);
+      const { priority, ...cleanPayload } = payload;
+      const retryResult = await supabase
+        .from('site_tickets')
+        .insert(cleanPayload)
+        .select();
+      data = retryResult.data;
+      error = retryResult.error;
+    }
+
     if (error) console.error("addTicket error:", error);
     
     if (data && data[0]) {
@@ -348,11 +364,13 @@ export const db = {
       
       // Trigger notifications asynchronously
       Promise.resolve().then(() => {
+        const priorityLabel = t.priority === 'Acil' ? '🚨 ACİL (Öncelikli)' : t.priority || 'Normal';
         const tgMessage = `<b>🔔 Yeni Talep Oluşturuldu (#T-${t.id})</b>\n\n` +
           `<b>Gönderen:</b> ${t.full_name}\n` +
           `<b>Telefon:</b> ${t.phone}\n` +
           `<b>Konum:</b> ${t.block} - Daire ${t.apt_no}\n` +
           `<b>Kategori:</b> ${t.category}\n` +
+          `<b>Öncelik:</b> ${priorityLabel}\n` +
           `<b>Konu:</b> ${t.title}\n` +
           `<b>Detay:</b> ${t.detail}`;
         sendTelegramNotification(tgMessage);
@@ -360,13 +378,14 @@ export const db = {
         const emailParams = {
           to_name: "Yönetici",
           from_name: t.full_name,
-          subject: `Yeni Talep Alındı: #T-${t.id}`,
+          subject: `Yeni Talep Alındı [${t.priority || 'Normal'}]: #T-${t.id}`,
           message: `Sayın Yönetici,\n\nSiteden yeni bir talep/arıza kaydı oluşturulmuştur:\n\n` +
                    `Talep No: #T-${t.id}\n` +
                    `Sakin: ${t.full_name}\n` +
                    `Telefon: ${t.phone}\n` +
                    `Blok/Daire: ${t.block} - Daire ${t.apt_no}\n` +
                    `Kategori: ${t.category}\n` +
+                   `Öncelik: ${t.priority || 'Normal'}\n` +
                    `Konu: ${t.title}\n` +
                    `Detay: ${t.detail}\n\n` +
                    `Lütfen yönetim panelinden talebi inceleyerek ilgili personeli atayın.`
@@ -381,6 +400,7 @@ export const db = {
         block: t.block,
         aptNo: t.apt_no,
         category: t.category,
+        priority: t.priority || 'Normal',
         title: t.title,
         detail: t.detail,
         status: t.status,
@@ -403,6 +423,7 @@ export const db = {
     if ('status' in updatedData) payload.status = updatedData.status;
     if ('assignedStaff' in updatedData) payload.assigned_staff = updatedData.assignedStaff;
     if ('date' in updatedData) payload.date = updatedData.date;
+    if ('priority' in updatedData) payload.priority = updatedData.priority;
 
     const { data, error } = await supabase
       .from('site_tickets')

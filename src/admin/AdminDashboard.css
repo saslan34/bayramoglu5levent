@@ -745,6 +745,31 @@
 .badge-category.cat-peyzaj { background-color: rgba(253, 126, 20, 0.1); color: #fd7e14; }
 .badge-category.cat-diğer { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
 
+/* Priority Badge Colors */
+.badge-priority {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+.badge-priority.priority-düşük { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.badge-priority.priority-normal { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
+.badge-priority.priority-acil { 
+  background-color: rgba(220, 53, 69, 0.15); 
+  color: #dc3545; 
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
 /* Dashboard Overview adjustments */
 .bg-red {
   background-color: #dc3545 !important;

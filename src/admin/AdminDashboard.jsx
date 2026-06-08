@@ -53,6 +53,7 @@ export default function AdminDashboard() {
   // Ticket Filter States
   const [ticketStatusFilter, setTicketStatusFilter] = useState('all');
   const [ticketCatFilter, setTicketCatFilter] = useState('all');
+  const [ticketPriorityFilter, setTicketPriorityFilter] = useState('all');
 
   const navigate = useNavigate();
 
@@ -357,7 +358,8 @@ export default function AdminDashboard() {
   const filteredTickets = tickets.filter(t => {
     const statusMatch = ticketStatusFilter === 'all' || t.status === ticketStatusFilter;
     const catMatch = ticketCatFilter === 'all' || t.category === ticketCatFilter;
-    return statusMatch && catMatch;
+    const priorityMatch = ticketPriorityFilter === 'all' || (t.priority || 'Normal') === ticketPriorityFilter;
+    return statusMatch && catMatch && priorityMatch;
   });
 
   return (
@@ -640,6 +642,20 @@ export default function AdminDashboard() {
                   <option value="Diğer">Diğer</option>
                 </select>
               </div>
+
+              <div className="filter-group-item">
+                <label className="form-label">Öncelik Filtresi</label>
+                <select
+                  value={ticketPriorityFilter}
+                  onChange={(e) => setTicketPriorityFilter(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="all">Tüm Öncelikler</option>
+                  <option value="Düşük">Düşük</option>
+                  <option value="Normal">Normal</option>
+                  <option value="Acil">Acil</option>
+                </select>
+              </div>
             </div>
 
             <div className="table-responsive">
@@ -650,6 +666,7 @@ export default function AdminDashboard() {
                     <th>Tarih</th>
                     <th>Sakin Bilgisi</th>
                     <th>Kategori</th>
+                    <th>Öncelik</th>
                     <th>Talep Konusu ve Detayı</th>
                     <th>Görevli Personel Ata</th>
                     <th>Durum</th>
@@ -672,6 +689,11 @@ export default function AdminDashboard() {
                       </td>
                       <td>
                         <span className={`badge-category cat-${t.category.toLowerCase()}`}>{t.category}</span>
+                      </td>
+                      <td>
+                        <span className={`badge-priority priority-${(t.priority || 'Normal').toLowerCase()}`}>
+                          {t.priority === 'Acil' ? '🚨 ' : ''}{t.priority || 'Normal'}
+                        </span>
                       </td>
                       <td>
                         <div className="table-ticket-content">
@@ -717,7 +739,7 @@ export default function AdminDashboard() {
                   ))}
                   {filteredTickets.length === 0 && (
                     <tr>
-                      <td colSpan="8" className="text-center empty-row">Arama kriterlerinize uyan talep bulunamadı.</td>
+                      <td colSpan="9" className="text-center empty-row">Arama kriterlerinize uyan talep bulunamadı.</td>
                     </tr>
                   )}
                 </tbody>

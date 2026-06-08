@@ -71,6 +71,7 @@ export default function Home() {
   });
   const [ticketErrors, setTicketErrors] = useState({});
   const [submittedTicketId, setSubmittedTicketId] = useState('');
+  const [submittedTicketRank, setSubmittedTicketRank] = useState(null);
 
   useEffect(() => {
     // Fetch latest 3 announcements from dynamic DB
@@ -119,6 +120,7 @@ export default function Home() {
       const newTicket = await db.addTicket(ticketData);
       if (newTicket) {
         setSubmittedTicketId(newTicket.id);
+        setSubmittedTicketRank(newTicket.queueRank);
         // Reset form
         setTicketData({
           fullName: '',
@@ -247,11 +249,22 @@ export default function Home() {
                     <span>Talep Numarası</span>
                     <h2>#T-{submittedTicketId}</h2>
                   </div>
+
+                  {submittedTicketRank && (
+                    <div className="queue-rank-badge">
+                      <div className="queue-rank-icon"><i className="fa-solid fa-clock-rotate-left"></i></div>
+                      <div className="queue-rank-info">
+                        <span>Mevcut Sıranız</span>
+                        <h4>{submittedTicketRank}. Sıradasınız</h4>
+                        <p>Öncelik derecesi ve açık taleplere göre hesaplanmıştır.</p>
+                      </div>
+                    </div>
+                  )}
                   
                   <p className="notice-subtext">
                     Yöneticilerimiz talebinizi inceleyip en kısa sürede ilgili personele yönlendirecektir. Bu numarayı gerektiğinde sorgulama için saklayabilirsiniz.
                   </p>
-                  <button className="btn btn-secondary mt-3" onClick={() => setSubmittedTicketId('')}>
+                  <button className="btn btn-secondary mt-3" onClick={() => { setSubmittedTicketId(''); setSubmittedTicketRank(null); }}>
                     Yeni Talep Oluştur
                   </button>
                 </div>

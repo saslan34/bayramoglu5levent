@@ -479,7 +479,57 @@
   .ticket-id-badge h2 {
     font-size: 1.8rem;
   }
+}/* Queue Rank Badge styling */
+.queue-rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: rgba(46, 125, 50, 0.06);
+  border: 1px solid rgba(46, 125, 50, 0.15);
+  padding: 1.2rem;
+  border-radius: var(--border-radius-md);
+  margin: 1rem auto;
+  max-width: 100%;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.04);
 }
 
+.queue-rank-icon {
+  font-size: 2.2rem;
+  color: #2e7d32;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
 
+.queue-rank-info {
+  display: flex;
+  flex-direction: column;
+}
 
+.queue-rank-info span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.queue-rank-info h4 {
+  font-size: 1.35rem;
+  color: #2e7d32;
+  margin: 0.15rem 0;
+  font-weight: 700;
+}
+
+.queue-rank-info p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.3;
+}

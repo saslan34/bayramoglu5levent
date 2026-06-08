@@ -362,6 +362,40 @@ export const db = {
     if (data && data[0]) {
       const t = data[0];
       
+      // Calculate queue rank based on priority and age
+      let queueRank = 1;
+      let totalActive = 1;
+      try {
+        const { data: activeTickets } = await supabase
+          .from('site_tickets')
+          .select('id, priority, created_at')
+          .in('status', ['new', 'ongoing']);
+        
+        if (activeTickets && activeTickets.length > 0) {
+          totalActive = activeTickets.length;
+          const priorityWeight = { 'Acil': 3, 'Normal': 2, 'Düşük': 1 };
+          const sorted = [...activeTickets].sort((a, b) => {
+            const weightA = priorityWeight[a.priority] || 2;
+            const weightB = priorityWeight[b.priority] || 2;
+            
+            if (weightA !== weightB) {
+              return weightB - weightA; // Higher priority first
+            }
+            
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : parseFloat(a.id) || 0;
+            const timeB = b.created_at ? new Date(b.created_at).getTime() : parseFloat(b.id) || 0;
+            return timeA - timeB; // Oldest first
+          });
+          
+          const idx = sorted.findIndex(item => item.id === t.id);
+          if (idx !== -1) {
+            queueRank = idx + 1;
+          }
+        }
+      } catch (err) {
+        console.warn("Queue calculation error:", err.message);
+      }
+      
       // Trigger notifications asynchronously
       Promise.resolve().then(() => {
         const priorityLabel = t.priority === 'Acil' ? '🚨 ACİL (Öncelikli)' : t.priority || 'Normal';
@@ -371,6 +405,7 @@ export const db = {
           `<b>Konum:</b> ${t.block} - Daire ${t.apt_no}\n` +
           `<b>Kategori:</b> ${t.category}\n` +
           `<b>Öncelik:</b> ${priorityLabel}\n` +
+          `<b>İş Sırası:</b> ${queueRank}. Sırada (Toplam ${totalActive} aktif talep)\n\n` +
           `<b>Konu:</b> ${t.title}\n` +
           `<b>Detay:</b> ${t.detail}`;
         sendTelegramNotification(tgMessage);
@@ -386,6 +421,7 @@ export const db = {
                    `Blok/Daire: ${t.block} - Daire ${t.apt_no}\n` +
                    `Kategori: ${t.category}\n` +
                    `Öncelik: ${t.priority || 'Normal'}\n` +
+                   `İş Sırası: ${queueRank}. Sırada (Toplam ${totalActive} aktif talep)\n` +
                    `Konu: ${t.title}\n` +
                    `Detay: ${t.detail}\n\n` +
                    `Lütfen yönetim panelinden talebi inceleyerek ilgili personeli atayın.`
@@ -405,7 +441,8 @@ export const db = {
         detail: t.detail,
         status: t.status,
         assignedStaff: t.assigned_staff,
-        date: t.date
+        date: t.date,
+        queueRank: queueRank
       };
     }
     return null;

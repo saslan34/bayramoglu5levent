@@ -348,7 +348,8 @@ export const db = {
     
     if (error && error.message && error.message.includes('column') && error.message.includes('does not exist')) {
       console.warn("Priority column doesn't exist yet, retrying without it:", error.message);
-      const { priority, ...cleanPayload } = payload;
+      const cleanPayload = { ...payload };
+      delete cleanPayload.priority;
       const retryResult = await supabase
         .from('site_tickets')
         .insert(cleanPayload)
@@ -790,5 +791,275 @@ export const db = {
       console.error("deleteFinance error:", err.message);
       return false;
     }
+  },
+
+  // Dues (Aidat Yönetimi)
+  getDuesForUser: async (userId, username) => {
+    try {
+      const { data, error } = await supabase
+        .from('site_dues')
+        .select('*')
+        .eq('user_id', userId)
+        .order('due_date', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn("getDuesForUser error, falling back to localStorage mock data:", err.message);
+      const key = `mock_dues_${userId || username}`;
+      let mockData = localStorage.getItem(key);
+      if (!mockData) {
+        mockData = [
+          {
+            id: `mock-due-1`,
+            user_id: userId || 'mock-user-id',
+            period: 'Haziran 2026',
+            amount: 1500.00,
+            status: 'unpaid',
+            due_date: '15.06.2026',
+            payment_date: null
+          },
+          {
+            id: `mock-due-2`,
+            user_id: userId || 'mock-user-id',
+            period: 'Mayıs 2026',
+            amount: 1500.00,
+            status: 'paid',
+            due_date: '15.05.2026',
+            payment_date: '10.05.2026 18:24'
+          },
+          {
+            id: `mock-due-3`,
+            user_id: userId || 'mock-user-id',
+            period: 'Nisan 2026',
+            amount: 1500.00,
+            status: 'paid',
+            due_date: '15.04.2026',
+            payment_date: '12.04.2026 10:15'
+          }
+        ];
+        localStorage.setItem(key, JSON.stringify(mockData));
+      } else {
+        mockData = JSON.parse(mockData);
+      }
+      return mockData;
+    }
+  },
+
+  payDue: async (dueId, userId, username, fullName) => {
+    const paymentDateStr = new Date().toLocaleString("tr-TR");
+    
+    if (dueId && !String(dueId).startsWith('mock-')) {
+      try {
+        const { data, error } = await supabase
+          .from('site_dues')
+          .update({
+            status: 'paid',
+            payment_date: paymentDateStr
+          })
+          .eq('id', dueId)
+          .select();
+        
+        if (error) throw error;
+        
+        if (data && data[0]) {
+          const d = data[0];
+          Promise.resolve().then(async () => {
+            let name = fullName || 'Sakin';
+            if (userId && !fullName) {
+              const { data: userData } = await supabase
+                .from('site_users')
+                .select('full_name')
+                .eq('id', userId)
+                .single();
+              if (userData) name = userData.full_name;
+            }
+            
+            const tgMsg = `<b>💳 Aidat Tahsilat Bildirimi</b>\n\n` +
+              `<b>Sakin:</b> ${name}\n` +
+              `<b>Dönem:</b> ${d.period}\n` +
+              `<b>Tutar:</b> ${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(d.amount)}\n` +
+              `<b>Ödeme Tarihi:</b> ${paymentDateStr}\n` +
+              `<b>Yöntem:</b> Kredi Kartı (Online)`;
+            sendTelegramNotification(tgMsg);
+          });
+          return data[0];
+        }
+      } catch (err) {
+        console.error("payDue database error:", err.message);
+      }
+    }
+
+    const key = `mock_dues_${userId || username}`;
+    let mockData = localStorage.getItem(key);
+    if (mockData) {
+      const parsed = JSON.parse(mockData);
+      const idx = parsed.findIndex(d => d.id === dueId);
+      if (idx !== -1) {
+        parsed[idx].status = 'paid';
+        parsed[idx].payment_date = paymentDateStr;
+        localStorage.setItem(key, JSON.stringify(parsed));
+        
+        const d = parsed[idx];
+        const name = fullName || username || 'Site Sakini';
+        const tgMsg = `<b>💳 [MOCK] Aidat Tahsilat Bildirimi</b>\n\n` +
+          `<b>Sakin:</b> ${name}\n` +
+          `<b>Dönem:</b> ${d.period}\n` +
+          `<b>Tutar:</b> ${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(d.amount)}\n` +
+          `<b>Ödeme Tarihi:</b> ${paymentDateStr}\n` +
+          `<b>Yöntem:</b> Kredi Kartı (Simüle)`;
+        sendTelegramNotification(tgMsg);
+
+        return parsed[idx];
+      }
+    }
+    return null;
+  },
+
+  getDues: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('site_dues')
+        .select(`
+          id,
+          user_id,
+          period,
+          amount,
+          status,
+          due_date,
+          payment_date,
+          site_users (
+            username,
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      return (data || []).map(d => ({
+        id: d.id,
+        user_id: d.user_id,
+        username: d.site_users?.username || 'Bilinmiyor',
+        fullName: d.site_users?.full_name || 'Bilinmeyen Sakin',
+        period: d.period,
+        amount: d.amount,
+        status: d.status,
+        due_date: d.due_date,
+        payment_date: d.payment_date
+      }));
+    } catch (err) {
+      console.warn("getDues error, falling back to mock dashboard dues:", err.message);
+      try {
+        const { data: users } = await supabase
+          .from('site_users')
+          .select('*')
+          .eq('role', 'resident');
+        
+        if (users && users.length > 0) {
+          const list = [];
+          users.slice(0, 30).forEach((u, index) => {
+            list.push({
+              id: `mock-all-${index}-1`,
+              user_id: u.id,
+              username: u.username,
+              fullName: u.full_name,
+              period: 'Haziran 2026',
+              amount: 1500.00,
+              status: index % 3 === 0 ? 'unpaid' : 'paid',
+              due_date: '15.06.2026',
+              payment_date: index % 3 === 0 ? null : '05.06.2026 11:32'
+            });
+            list.push({
+              id: `mock-all-${index}-2`,
+              user_id: u.id,
+              username: u.username,
+              fullName: u.full_name,
+              period: 'Mayıs 2026',
+              amount: 1500.00,
+              status: 'paid',
+              due_date: '15.05.2026',
+              payment_date: '12.05.2026 17:40'
+            });
+          });
+          return list;
+        }
+      } catch (inner) {
+        console.error(inner);
+      }
+      return [];
+    }
+  },
+
+  addDue: async (due) => {
+    try {
+      const { data, error } = await supabase
+        .from('site_dues')
+        .insert({
+          user_id: due.user_id,
+          period: due.period,
+          amount: parseFloat(due.amount),
+          due_date: due.due_date,
+          status: due.status || 'unpaid',
+          payment_date: due.payment_date || null
+        })
+        .select();
+      if (error) throw error;
+      return data ? data[0] : null;
+    } catch (err) {
+      console.error("addDue error:", err.message);
+      return null;
+    }
+  },
+
+  deleteDue: async (id) => {
+    try {
+      const { error } = await supabase
+        .from('site_dues')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error("deleteDue error:", err.message);
+      return false;
+    }
+  },
+
+  bulkAddDues: async (period, amount, dueDate) => {
+    try {
+      const { data: users, error: userError } = await supabase
+        .from('site_users')
+        .select('id')
+        .eq('role', 'resident');
+      
+      if (userError) throw userError;
+      
+      if (users && users.length > 0) {
+        const duesRecords = users.map(u => ({
+          user_id: u.id,
+          period: period,
+          amount: parseFloat(amount),
+          due_date: dueDate,
+          status: 'unpaid',
+          payment_date: null
+        }));
+
+        const chunkSize = 100;
+        for (let i = 0; i < duesRecords.length; i += chunkSize) {
+          const chunk = duesRecords.slice(i, i + chunkSize);
+          const { error } = await supabase
+            .from('site_dues')
+            .insert(chunk);
+          if (error) throw error;
+        }
+        return { success: true, count: duesRecords.length };
+      }
+      return { success: false, count: 0 };
+    } catch (err) {
+      console.error("bulkAddDues error:", err.message);
+      return { success: false, error: err.message };
+    }
   }
 };
+

@@ -55,6 +55,15 @@ export default function AdminDashboard() {
   const [ticketCatFilter, setTicketCatFilter] = useState('all');
   const [ticketPriorityFilter, setTicketPriorityFilter] = useState('all');
 
+  // Dues States
+  const [dues, setDues] = useState([]);
+  const [duesStatusFilter, setDuesStatusFilter] = useState('all');
+  const [duesBlockFilter, setDuesBlockFilter] = useState('all');
+  const [duesPeriodFilter, setDuesPeriodFilter] = useState('all');
+  const [bulkDueForm, setBulkDueForm] = useState({ period: '', amount: '', dueDate: '' });
+  const [singleDueForm, setSingleDueForm] = useState({ userId: '', period: '', amount: '', dueDate: '' });
+  const [showSingleDueModal, setShowSingleDueModal] = useState(false);
+
   const navigate = useNavigate();
 
   // Access check helper
@@ -67,13 +76,13 @@ export default function AdminDashboard() {
     if (section === 'tickets') return role === 'technical_admin';
     if (section === 'announcements' || section === 'projects' || section === 'inbox') return role === 'moderator';
     if (section === 'staff') return role === 'technical_admin';
-    if (section === 'purchases' || section === 'finances') return role === 'super_admin';
+    if (section === 'purchases' || section === 'finances' || section === 'dues') return role === 'super_admin';
     return false;
   };
 
   const refreshData = async () => {
     try {
-      const [annData, projData, msgData, ticketData, userData, staffData, purchasesData, financesData] = await Promise.all([
+      const [annData, projData, msgData, ticketData, userData, staffData, purchasesData, financesData, duesData] = await Promise.all([
         db.getAnnouncements(),
         db.getProjects(),
         db.getMessages(),
@@ -81,7 +90,8 @@ export default function AdminDashboard() {
         db.getUsers(),
         db.getStaff(),
         db.getPurchases(),
-        db.getFinances()
+        db.getFinances(),
+        db.getDues()
       ]);
       setAnnouncements(annData);
       setProjects(projData);
@@ -91,6 +101,7 @@ export default function AdminDashboard() {
       setStaff(staffData);
       setPurchases(purchasesData);
       setFinances(financesData);
+      setDues(duesData);
     } catch (err) {
       console.error("Dashboard veri yenileme hatası:", err);
     }
@@ -256,6 +267,62 @@ export default function AdminDashboard() {
     }
     if (window.confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
       await db.deleteUser(id);
+      await refreshData();
+    }
+  };
+
+  // --- Dues Actions ---
+  const handleSaveBulkDue = async (e) => {
+    e.preventDefault();
+    if (!bulkDueForm.period || !bulkDueForm.amount || !bulkDueForm.dueDate) {
+      alert('Lütfen tüm alanları doldurun.');
+      return;
+    }
+    const confirmMsg = `${bulkDueForm.period} dönemi için tüm site sakinlerine ${bulkDueForm.amount} TL tutarında aidat yansıtılacaktır. Emin misiniz?`;
+    if (window.confirm(confirmMsg)) {
+      const result = await db.bulkAddDues(bulkDueForm.period, bulkDueForm.amount, bulkDueForm.dueDate);
+      if (result.success) {
+        alert(`${result.count} adet daire için aidat borcu başarıyla yansıtıldı.`);
+        setBulkDueForm({ period: '', amount: '', dueDate: '' });
+        await refreshData();
+      } else {
+        alert('Aidat yansıtılırken hata oluştu: ' + result.error);
+      }
+    }
+  };
+
+  const handleSaveSingleDue = async (e) => {
+    e.preventDefault();
+    if (!singleDueForm.userId || !singleDueForm.period || !singleDueForm.amount || !singleDueForm.dueDate) {
+      alert('Lütfen tüm alanları doldurun.');
+      return;
+    }
+    const result = await db.addDue({
+      user_id: singleDueForm.userId,
+      period: singleDueForm.period,
+      amount: singleDueForm.amount,
+      due_date: singleDueForm.dueDate
+    });
+    if (result) {
+      alert('Bireysel aidat borcu başarıyla eklendi.');
+      setShowSingleDueModal(false);
+      setSingleDueForm({ userId: '', period: '', amount: '', dueDate: '' });
+      await refreshData();
+    } else {
+      alert('Aidat eklenirken hata oluştu.');
+    }
+  };
+
+  const handleMarkDueAsPaid = async (due) => {
+    if (window.confirm(`${due.fullName} için ${due.period} aidatını elden ödendi olarak işaretlemek istiyor misiniz?`)) {
+      await db.payDue(due.id, due.user_id, due.username, due.fullName);
+      await refreshData();
+    }
+  };
+
+  const handleDeleteDue = async (id) => {
+    if (window.confirm('Bu aidat borç kaydını silmek istediğinizden emin misiniz?')) {
+      await db.deleteDue(id);
       await refreshData();
     }
   };
@@ -474,6 +541,15 @@ export default function AdminDashboard() {
               onClick={() => { setActiveSection('purchases'); setIsSidebarOpen(false); }}
             >
               <i className="fa-solid fa-cart-shopping"></i> Satın Alma Yönetimi
+            </button>
+          )}
+
+          {hasAccess('dues') && (
+            <button
+              className={`sidebar-link ${activeSection === 'dues' ? 'active' : ''}`}
+              onClick={() => { setActiveSection('dues'); setIsSidebarOpen(false); }}
+            >
+              <i className="fa-solid fa-credit-card"></i> Aidat Yönetimi
             </button>
           )}
 
@@ -740,6 +816,228 @@ export default function AdminDashboard() {
                   {filteredTickets.length === 0 && (
                     <tr>
                       <td colSpan="9" className="text-center empty-row">Arama kriterlerinize uyan talep bulunamadı.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION: DUES MANAGEMENT */}
+        {activeSection === 'dues' && (
+          <div className="admin-section fade-in">
+            <div className="section-header-row">
+              <h1 className="admin-section-title">Aidat ve Tahsilat Yönetimi</h1>
+              <button className="btn btn-primary" onClick={() => setShowSingleDueModal(true)}>
+                <i className="fa-solid fa-plus"></i> Bireysel Aidat Tanımla
+              </button>
+            </div>
+
+            {/* Dues Stats */}
+            {(() => {
+              const paidDuesList = dues.filter(d => d.status === 'paid');
+              const unpaidDuesList = dues.filter(d => d.status === 'unpaid');
+              const totalCollected = paidDuesList.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+              const totalPending = unpaidDuesList.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+              const totalDues = dues.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+              const rate = totalDues > 0 ? ((totalCollected / totalDues) * 100).toFixed(1) : '0';
+
+              return (
+                <div className="stats-grid-admin mb-4">
+                  <div className="stat-admin-card card-teal">
+                    <div className="stat-admin-icon"><i className="fa-solid fa-money-bill-wave"></i></div>
+                    <div className="stat-admin-info">
+                      <h3>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalCollected)}</h3>
+                      <p>Toplam Tahsil Edilen</p>
+                    </div>
+                  </div>
+                  <div className="stat-admin-card card-envelope">
+                    <div className="stat-admin-icon"><i className="fa-solid fa-circle-exclamation text-danger"></i></div>
+                    <div className="stat-admin-info">
+                      <h3>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalPending)}</h3>
+                      <p>Bekleyen Alacak (Borç)</p>
+                    </div>
+                  </div>
+                  <div className="stat-admin-card card-primary">
+                    <div className="stat-admin-icon"><i className="fa-solid fa-percent"></i></div>
+                    <div className="stat-admin-info">
+                      <h3>%{rate}</h3>
+                      <p>Tahsilat Oranı</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Bulk Insert Form Card */}
+            <div className="admin-form-card mb-4">
+              <h3><i className="fa-solid fa-users"></i> Toplu Aidat Yansıtma</h3>
+              <p className="notice-subtext mb-3">Tek bir işlemle veritabanında tanımlı <strong>tüm site sakinlerine</strong> borç kaydı yansıtabilirsiniz.</p>
+              <form onSubmit={handleSaveBulkDue} className="inline-admin-form">
+                <div className="form-group-item">
+                  <label className="form-label">Dönem / Ay</label>
+                  <input
+                    type="text"
+                    placeholder="Örn: Haziran 2026"
+                    value={bulkDueForm.period}
+                    onChange={(e) => setBulkDueForm({ ...bulkDueForm, period: e.target.value })}
+                    className="form-control"
+                    required
+                  />
+                </div>
+                <div className="form-group-item">
+                  <label className="form-label">Tutar (TL)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Örn: 1500.00"
+                    value={bulkDueForm.amount}
+                    onChange={(e) => setBulkDueForm({ ...bulkDueForm, amount: e.target.value })}
+                    className="form-control"
+                    required
+                  />
+                </div>
+                <div className="form-group-item">
+                  <label className="form-label">Son Ödeme Tarihi</label>
+                  <input
+                    type="text"
+                    placeholder="Örn: 15.06.2026"
+                    value={bulkDueForm.dueDate}
+                    onChange={(e) => setBulkDueForm({ ...bulkDueForm, dueDate: e.target.value })}
+                    className="form-control"
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  <i className="fa-solid fa-bullhorn"></i> Toplu Aidat Borcu Yansıt
+                </button>
+              </form>
+            </div>
+
+            {/* Filters Row */}
+            <div className="ticket-filters-row">
+              <div className="filter-group-item">
+                <label className="form-label">Durum Filtresi</label>
+                <select
+                  value={duesStatusFilter}
+                  onChange={(e) => setDuesStatusFilter(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="all">Tüm Durumlar</option>
+                  <option value="paid">Ödenenler</option>
+                  <option value="unpaid">Ödemeyenler (Borçlu)</option>
+                </select>
+              </div>
+
+              <div className="filter-group-item">
+                <label className="form-label">Blok Filtresi</label>
+                <select
+                  value={duesBlockFilter}
+                  onChange={(e) => setDuesBlockFilter(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="all">Tüm Bloklar</option>
+                  <option value="A1">A1 Blok</option>
+                  <option value="A2">A2 Blok</option>
+                  <option value="A3">A3 Blok</option>
+                  <option value="A4">A4 Blok</option>
+                </select>
+              </div>
+
+              <div className="filter-group-item">
+                <label className="form-label">Dönem Filtresi</label>
+                <select
+                  value={duesPeriodFilter}
+                  onChange={(e) => setDuesPeriodFilter(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="all">Tüm Dönemler</option>
+                  {(() => {
+                    const periods = [...new Set(dues.map(d => d.period))];
+                    return periods.map((p, idx) => (
+                      <option key={idx} value={p}>{p}</option>
+                    ));
+                  })()}
+                </select>
+              </div>
+            </div>
+
+            {/* List Table */}
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Sakin Adı</th>
+                    <th>Blok / Daire</th>
+                    <th>Dönem</th>
+                    <th>Tutar</th>
+                    <th>Son Ödeme</th>
+                    <th>Durum</th>
+                    <th>Ödeme Tarihi</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const filteredDues = dues.filter(d => {
+                      const matchStatus = duesStatusFilter === 'all' || d.status === duesStatusFilter;
+                      
+                      const parts = d.fullName ? d.fullName.split(' ') : [];
+                      const blockName = parts[0] || ''; 
+                      const matchBlock = duesBlockFilter === 'all' || blockName.includes(duesBlockFilter);
+                      const matchPeriod = duesPeriodFilter === 'all' || d.period === duesPeriodFilter;
+                      return matchStatus && matchBlock && matchPeriod;
+                    });
+
+                    return filteredDues.map((d) => (
+                      <tr key={d.id}>
+                        <td style={{ fontWeight: '700' }}>{d.fullName}</td>
+                        <td>
+                          {(() => {
+                            const parts = d.fullName ? d.fullName.split(' ') : [];
+                            const block = parts[0] || '';
+                            const daireNo = parts[3] || '';
+                            return `${block} - No ${daireNo}`;
+                          })()}
+                        </td>
+                        <td>{d.period}</td>
+                        <td style={{ fontWeight: '700' }}>
+                          {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(d.amount)}
+                        </td>
+                        <td>{d.due_date}</td>
+                        <td>
+                          <span className={`badge-status ${d.status}`}>
+                            {d.status === 'paid' ? 'Ödendi' : 'Ödenmedi'}
+                          </span>
+                        </td>
+                        <td>{d.payment_date || '-'}</td>
+                        <td>
+                          <div className="action-buttons">
+                            {d.status === 'unpaid' && (
+                              <button 
+                                className="btn-table edit" 
+                                onClick={() => handleMarkDueAsPaid(d)}
+                                title="Elden Ödendi İşaretle"
+                              >
+                                <i className="fa-solid fa-circle-check"></i>
+                              </button>
+                            )}
+                            <button 
+                              className="btn-table delete" 
+                              onClick={() => handleDeleteDue(d.id)}
+                              title="Sil"
+                            >
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                  {dues.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="text-center empty-row">Henüz aidat kaydı bulunmamaktadır.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1497,57 +1795,61 @@ export default function AdminDashboard() {
         <div className="admin-modal-overlay" onClick={() => setShowFinModal(false)}>
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{finForm.id ? 'Raporu Düzenle' : 'Yeni Gelir-Gider Raporu Ekle'}</h2>
-              <button className="close-btn" onClick={() => setShowFinModal(false)}><i className="fa-solid fa-xmark"></i></button>
+              <h2>{finForm.id ? 'Gelir-Gider Raporunu Düzenle' : 'Yeni Gelir-Gider Raporu Tanımla'}</h2>
+              <button className="close-btn" onClick={() => setShowFinModal(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </div>
             <form onSubmit={handleSaveFinance} className="admin-modal-form">
-              <div className="form-group">
-                <label className="form-label">Dönem / Ay</label>
-                <input
-                  type="text"
-                  required
-                  value={finForm.period}
-                  onChange={(e) => setFinForm({ ...finForm, period: e.target.value })}
-                  className="form-control"
-                  placeholder="Örn. Mayıs 2026"
-                />
-              </div>
+              <div className="admin-modal-body">
+                <div className="form-group">
+                  <label className="form-label">Dönem / Ay</label>
+                  <input
+                    type="text"
+                    required
+                    value={finForm.period}
+                    onChange={(e) => setFinForm({ ...finForm, period: e.target.value })}
+                    className="form-control"
+                    placeholder="Örn. Haziran 2026"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">Aylık Toplam Gelir (TL)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={finForm.income}
-                  onChange={(e) => setFinForm({ ...finForm, income: e.target.value })}
-                  className="form-control"
-                  placeholder="Örn. 155000"
-                />
-              </div>
+                <div className="form-group">
+                  <label className="form-label">Aylık Toplam Gelir (TL)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={finForm.income}
+                    onChange={(e) => setFinForm({ ...finForm, income: e.target.value })}
+                    className="form-control"
+                    placeholder="Örn. 155000"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">Aylık Toplam Gider (TL)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={finForm.expense}
-                  onChange={(e) => setFinForm({ ...finForm, expense: e.target.value })}
-                  className="form-control"
-                  placeholder="Örn. 148500"
-                />
-              </div>
+                <div className="form-group">
+                  <label className="form-label">Aylık Toplam Gider (TL)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={finForm.expense}
+                    onChange={(e) => setFinForm({ ...finForm, expense: e.target.value })}
+                    className="form-control"
+                    placeholder="Örn. 148500"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">Genel Açıklama</label>
-                <textarea
-                  rows="3"
-                  value={finForm.description}
-                  onChange={(e) => setFinForm({ ...finForm, description: e.target.value })}
-                  className="form-control"
-                  placeholder="Dönem özeti veya ek bilgiler..."
-                ></textarea>
+                <div className="form-group">
+                  <label className="form-label">Genel Açıklama</label>
+                  <textarea
+                    rows="3"
+                    value={finForm.description}
+                    onChange={(e) => setFinForm({ ...finForm, description: e.target.value })}
+                    className="form-control"
+                    placeholder="Dönem özeti veya ek bilgiler..."
+                  ></textarea>
+                </div>
               </div>
 
               <div className="modal-footer-actions">
@@ -1558,6 +1860,76 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
+
+        {/* Single Due Add Modal */}
+        {showSingleDueModal && (
+          <div className="admin-modal-overlay">
+            <div className="admin-modal-card">
+              <div className="modal-header">
+                <h2>Bireysel Aidat Tanımla</h2>
+                <button className="close-btn" onClick={() => setShowSingleDueModal(false)}>
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <form onSubmit={handleSaveSingleDue}>
+                <div className="admin-modal-body">
+                  <div className="form-group">
+                    <label className="form-label">Sakin Seçin</label>
+                    <select
+                      value={singleDueForm.userId}
+                      onChange={(e) => setSingleDueForm({ ...singleDueForm, userId: e.target.value })}
+                      className="form-control"
+                      required
+                    >
+                      <option value="">-- Sakin Seçin --</option>
+                      {users.filter(u => u.role === 'resident').map(u => (
+                        <option key={u.id} value={u.id}>{u.fullName} ({u.username})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Dönem / Ay</label>
+                    <input
+                      type="text"
+                      placeholder="Örn: Haziran 2026"
+                      value={singleDueForm.period}
+                      onChange={(e) => setSingleDueForm({ ...singleDueForm, period: e.target.value })}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Tutar (TL)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Örn: 1500.00"
+                      value={singleDueForm.amount}
+                      onChange={(e) => setSingleDueForm({ ...singleDueForm, amount: e.target.value })}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Son Ödeme Tarihi</label>
+                    <input
+                      type="text"
+                      placeholder="Örn: 15.06.2026"
+                      value={singleDueForm.dueDate}
+                      onChange={(e) => setSingleDueForm({ ...singleDueForm, dueDate: e.target.value })}
+                      className="form-control"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowSingleDueModal(false)}>İptal</button>
+                  <button type="submit" className="btn btn-primary">Kaydet</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
   );
 }

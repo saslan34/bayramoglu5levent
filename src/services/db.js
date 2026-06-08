@@ -814,7 +814,7 @@ export const db = {
             id: `mock-due-1`,
             user_id: userId || 'mock-user-id',
             period: 'Haziran 2026',
-            amount: 1500.00,
+            amount: 4949.00,
             status: 'unpaid',
             due_date: '15.06.2026',
             payment_date: null
@@ -823,7 +823,7 @@ export const db = {
             id: `mock-due-2`,
             user_id: userId || 'mock-user-id',
             period: 'Mayıs 2026',
-            amount: 1500.00,
+            amount: 4949.00,
             status: 'paid',
             due_date: '15.05.2026',
             payment_date: '10.05.2026 18:24'
@@ -832,7 +832,7 @@ export const db = {
             id: `mock-due-3`,
             user_id: userId || 'mock-user-id',
             period: 'Nisan 2026',
-            amount: 1500.00,
+            amount: 4949.00,
             status: 'paid',
             due_date: '15.04.2026',
             payment_date: '12.04.2026 10:15'
@@ -965,7 +965,7 @@ export const db = {
               username: u.username,
               fullName: u.full_name,
               period: 'Haziran 2026',
-              amount: 1500.00,
+              amount: 4949.00,
               status: index % 3 === 0 ? 'unpaid' : 'paid',
               due_date: '15.06.2026',
               payment_date: index % 3 === 0 ? null : '05.06.2026 11:32'
@@ -976,7 +976,7 @@ export const db = {
               username: u.username,
               fullName: u.full_name,
               period: 'Mayıs 2026',
-              amount: 1500.00,
+              amount: 4949.00,
               status: 'paid',
               due_date: '15.05.2026',
               payment_date: '12.05.2026 17:40'

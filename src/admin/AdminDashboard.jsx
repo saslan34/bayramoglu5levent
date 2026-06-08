@@ -60,8 +60,8 @@ export default function AdminDashboard() {
   const [duesStatusFilter, setDuesStatusFilter] = useState('all');
   const [duesBlockFilter, setDuesBlockFilter] = useState('all');
   const [duesPeriodFilter, setDuesPeriodFilter] = useState('all');
-  const [bulkDueForm, setBulkDueForm] = useState({ period: '', amount: '', dueDate: '' });
-  const [singleDueForm, setSingleDueForm] = useState({ userId: '', period: '', amount: '', dueDate: '' });
+  const [bulkDueForm, setBulkDueForm] = useState({ period: '', amount: '4949', dueDate: '' });
+  const [singleDueForm, setSingleDueForm] = useState({ userId: '', period: '', amount: '4949', dueDate: '' });
   const [showSingleDueModal, setShowSingleDueModal] = useState(false);
 
   const navigate = useNavigate();
@@ -891,7 +891,7 @@ export default function AdminDashboard() {
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="Örn: 1500.00"
+                    placeholder="Örn: 4949.00"
                     value={bulkDueForm.amount}
                     onChange={(e) => setBulkDueForm({ ...bulkDueForm, amount: e.target.value })}
                     className="form-control"
@@ -1903,7 +1903,7 @@ export default function AdminDashboard() {
                     <input
                       type="number"
                       step="0.01"
-                      placeholder="Örn: 1500.00"
+                      placeholder="Örn: 4949.00"
                       value={singleDueForm.amount}
                       onChange={(e) => setSingleDueForm({ ...singleDueForm, amount: e.target.value })}
                       className="form-control"

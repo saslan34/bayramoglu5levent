@@ -62,7 +62,7 @@ export default function Home() {
   const [ticketData, setTicketData] = useState({
     fullName: '',
     phone: '',
-    block: 'A Blok',
+    block: 'A1 Blok',
     aptNo: '',
     category: 'Teknik',
     title: '',
@@ -122,7 +122,7 @@ export default function Home() {
         setTicketData({
           fullName: '',
           phone: '',
-          block: 'A Blok',
+          block: 'A1 Blok',
           aptNo: '',
           category: 'Teknik',
           title: '',
@@ -295,10 +295,10 @@ export default function Home() {
                         onChange={handleTicketInputChange}
                         className="form-control"
                       >
-                        <option value="A Blok">A Blok</option>
-                        <option value="B Blok">B Blok</option>
-                        <option value="C Blok">C Blok</option>
-                        <option value="D Blok">D Blok</option>
+                        <option value="A1 Blok">A1 Blok</option>
+                        <option value="A2 Blok">A2 Blok</option>
+                        <option value="A3 Blok">A3 Blok</option>
+                        <option value="A4 Blok">A4 Blok</option>
                       </select>
                     </div>
 
